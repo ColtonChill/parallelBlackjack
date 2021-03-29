@@ -13,5 +13,6 @@ class Card{
         std::string getRank();
         std::string getSuit();
         std::string str();
+        bool operator==(Card rhs) const { return ID == rhs.getID();}
         friend std::ostream& operator<<(std::ostream& os, Card& card);
 };
