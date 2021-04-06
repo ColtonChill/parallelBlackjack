@@ -9,7 +9,8 @@ class Hand{
     public:
         Hand() = default;
         Hand(Card card);
-        Hand(std::vector<Card> cardList);
+        Hand(int* info);  // used to recreate a hand from an info object
+        int* getInfo();  // used to pack in info object for MPI_COMM
         //getters
         int size();
         Card getCard(int i);

@@ -9,10 +9,19 @@
 Hand::Hand(Card card){
     cards.push_back(card);
 }
-Hand::Hand(std::vector<Card> cardList){
-    for (auto &&c : cardList){
-        cards.push_back(c);
+Hand::Hand(int* info){
+    for(int i=1;i<=info[0];i++){
+        cards.push_back(Card(info[i]));
     }
+}
+int* Hand::getInfo(){
+    // [0] = size, [1...] = id's
+    int* info = new int[cards.size()+1];
+    info[0] = cards.size();
+    for (int i = 1; i < cards.size()+1; i++){
+        info[i] = cards[i-1].getID();
+    }
+    return info;
 }
 int Hand::size(){
     return cards.size();
@@ -34,7 +43,7 @@ int Hand::score(){
     int aceCount = 0;
     for (auto &&card : cards){
         if(card.score()>10){
-            total += 0;
+            total += 10;
         }else{
             total += card.score();
             if(card.score()==1){
@@ -111,6 +120,7 @@ int* Deck::getInfo(){
 }
 
 Card Deck::draw(){
+    if(cards.size()<1){ init(); shuffle(); }
     Card temp = cards.back();
     info[temp.getID()%52]++;
     cards.pop_back();

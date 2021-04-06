@@ -1,6 +1,6 @@
 
 all: main.o card.o deck.o players.o game.o
-	g++ main.o game/deck.o game/card.o -o main.out
+	g++ main.o game/deck.o game/card.o game/players.o game/game.o -o main.out
 
 main.o: main.cpp
 	g++ -c main.cpp

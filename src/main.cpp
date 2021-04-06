@@ -1,24 +1,20 @@
 #include <iostream>  // cout/cin
 
 // #include "game.hpp" // header in local directory
-#include "game/deck.hpp"
+#include "game/game.hpp"
 
 int main(){
-    Deck deck = Deck(1);
-    Hand hand = Hand();
-    Card c1 = deck.draw();
-    Card c2 = deck.draw();
-    Card c3 = deck.draw();
-    hand.add(c1);
-    hand.add(c2);
-    hand.add(c3); 
-    for (auto &&card : hand.getCards())
-    {
-        std::cout<<card<<std::endl;
-    }
-    
-    
+    Game game = Game(2);
+    game.play();
 
-    std::cout<<std::endl;
+    int* temp = game.gameInfo();
+
+    std::cout<<std::endl<<std::endl;
+    temp[1] = 1;
+    Game rematch = Game(temp);
+    rematch.play(1,true);
+
+
+    // std::cout<<temp[0]<<":"<<temp[1]<<":"<<temp[2]<<":"<<temp[3]<<std::endl;
     return 0;
 }
