@@ -1,6 +1,10 @@
 #include "game.hpp"
 #include <vector>
 
+const char* coutState[5] = {"playing", "busted", "holding", "win", "lose"};
+
+
+
 Gamestate Game::makeGameState(){
     std::vector<Hand> hands;
     hands.push_back(dealer.hand);
@@ -29,13 +33,15 @@ Logic Game::mapLogic(){
     }
 }
 
-
 int* Game::gameInfo(){
-    // manual/automatic ==> 0/1
-    // deck state object
-    // player strategies.
-    // number of players (we assume a dealer and one player)
-    // hands of players
+    // throw away size for mpi send: 0
+    // auto/manuel: 1
+    // deck   : 2 -> 54
+    // logicType: 55
+    // #player: 56
+        // #hand: #57 -> 57+offset
+        // #hand: #% -> %+offset
+
     static std::vector<int> info;
     info.push_back(automatic);
 
@@ -63,7 +69,6 @@ int* Game::gameInfo(){
     info.insert(info.begin(),info.size()+1);  // size + the index of "size" itself.    
     return info.data(); // cast to int*
 }
-
 
 Game::Game(int* gamestate){ // NOTE TO SELF: need to include int flag for NPC logic unints
     // throw away size for mpi send: 0
@@ -125,6 +130,7 @@ Game::Game(int numPlayers){
         }
     }
 }
+
 void Game::reset(){
     dealer.reset();
     for (auto &&p : players) p->reset();
@@ -141,34 +147,36 @@ bool Game::doAction(Gambler *player){
     if(player->state != playing) return false;
     Turn action = player->takeTurn(makeGameState());
     if(action==hit){
-        std::clog<<"\t\thit"<<std::endl;
+        std::clog<<"\tHIT"<<std::endl;
         player->hand.add(deck.draw());
         player->showHand(0);
-        if(player->hand.score()>21){
+        if(player->hand.score()==-1){
             player->state=busted;
-            std::clog<<"\t\tBUSTED"<<std::endl;
+            std::clog<<"\t!!BUSTED!!"<<std::endl;
         }
     }else if(action == pause){
         return true;
     }else{
-        std::clog<<"\t\thold"<<std::endl;
+        std::clog<<"\tHOLD"<<std::endl;
         player->state = holding;
     }
     return false;
 }
 
-
-void Game::play(int rounds, bool continuing){
+int Game::play(int rounds){
+    int results = 0;  // for keeping track of player one wins
     for(int r = 1;r<=rounds;r++){
-        if(!continuing){
-            reset();
-            continuing = false;
-            // deal out cards
-            for(int i=0;i<2;i++) dealer.hand.add(deck.draw());
-            for(int p=0;p<players.size();p++){
-                for(int i=0;i<2;i++) players[p]->hand.add(deck.draw());
+        // deal out cards
+        for(int i=dealer.hand.size();i<2;i++) dealer.hand.add(deck.draw());
+        dealer.state = playing;
+
+        for(int p=0;p<players.size();p++){
+            players[p]->state = playing;
+            for(int i=players[p]->hand.size();i<2;i++){
+                players[p]->hand.add(deck.draw());
             }
         }
+    
         //show everyones hands
         std::clog<<"Starting Hands:"<<std::endl;
         dealer.showHand(1);
@@ -182,36 +190,53 @@ void Game::play(int rounds, bool continuing){
             std::clog<<"Turn:"<<std::endl;
             for (auto &&p : players){
                 p->showHand(1);
-                if(doAction(p)) return;  // for pausing the game
+                if(doAction(p)) return results;  // for pausing the game
             }
             dealer.showHand(1);
             doAction(&dealer);
             std::clog<<std::endl;
         }
 
-        // determine winners
-        if(dealer.state==busted){
-            for (auto &&player : players){
-                if(player->state==holding){
-                    player->state=win;
+        // determine winner
+            // find highest player
+        Gambler *currentMax = players[0];
+        for(int i=1;i<players.size();++i){
+            if(currentMax->hand.score() < players[i]->hand.score()){
+                currentMax = players[i];
+            }
+        }
+        // dealer one
+        if(currentMax->hand.score()<=dealer.hand.score()){
+            dealer.state = win;
+            for (auto &&p : players){
+                p->state = lose;
+            }
+        }else{ // check for ties
+            for (auto &&p : players){
+                if(p->hand.score() == currentMax->hand.score()){
+                    p->state = win;
                 }else{
-                    player->state=lose;
+                    p->state = lose;
                 }
             }
-        }else{ //dealer==holding
-            for (auto &&player : players){
-                if(player->hand.score()>dealer.hand.score()){
-                    player->state=win;
-                }else{
-                    player->state=lose;
-                }
-            }
+            dealer.state = lose;
         }
 
+        // print results
+        results += players[0]->state==win?1:0;
         std::clog<<"Round "<<r<<" Results:"<<std::endl;
-        std::clog<<"\tDealer:"<<dealer.state<<std::endl;
+        std::clog<<"\tDealer:"<<coutState[dealer.state]<<std::endl;
         for (auto &&p : players){
-            std::clog<<"\tPlayer:"<<p->ID<<":"<<p->state<<std::endl;
+            std::clog<<"\tPlayer:"<<p->ID<<":"<<coutState[p->state]<<std::endl;
         }
+        reset();
     }
+    return results;
+}
+
+void Game::setPlayer(int i, Hand hand){
+    for (auto &&card : hand.getCards()){
+        deck.find(card.getID());
+    }
+    players[i]->hand = hand;
 }
