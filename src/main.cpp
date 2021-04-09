@@ -50,27 +50,26 @@ double bustOnHit(int rank, int size, int iterations){
             //send more work to workers
             MPI_Send(data, data[0], MPI_INT, status.MPI_SOURCE, 1, MCW);
             sent++;
-
             iterations--;
         }
 
-
-        //send kill message to all processes
+        //kill all processes
         for(int i = 1; i < size; i++){
             //recieve final results
-            MPI_Recv(&result, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MCW, MPI_STATUS_IGNORE);
+            MPI_Recv(&result, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MCW, &status);
             won += result;
 
             //send kill message
             data = 0;
-            MPI_Send(&data, 1, MPI_INT, i, 0, MCW);
+            MPI_Send(&data, 1, MPI_INT, status.MPI_SOURCE, 0, MCW);
         }
 
         //calculate results
-        percent = won/sent;
+        percent = (double)won/(double)sent;
 
         //print results
-        cout << "The simulation did not bust on " << won << "/" << sent << " that is a " << percent*100 << "% chance" << endl;
+        cout << "The simulation did not bust on " << won << "/" << sent << endl; 
+        cout << "That means it did not bust " << percent*100 << "% of the time" << endl;
 
     } else {
         int length;
@@ -81,16 +80,15 @@ double bustOnHit(int rank, int size, int iterations){
         clog.setstate(ios_base::failbit);
 
         while(keepGoing){
-            //recieve gamestate
-            MPI_Probe(0, MPI_ANY_TAG, MCW, &status);
-
             //check for kill message
+            MPI_Probe(0, MPI_ANY_TAG, MCW, &status);
             if(status.MPI_TAG == 0){
                 keepGoing = false;
-                cout << "Process " << rank << " has been killed" << endl;
+                // cout << "Process " << rank << " has been killed" << endl;
                 break;
             }
 
+            //recieve gamestate
             MPI_Get_count(&status, MPI_INT, &length);
 
             int recieved[length];
@@ -102,7 +100,8 @@ double bustOnHit(int rank, int size, int iterations){
             game.play(1);
 
             //get results
-            if(1){
+            cout << game.players[0]->state << endl;
+            if(game.players[0]->state != busted){
                 result = 1;
             } else {
                 result = 0;
@@ -111,7 +110,6 @@ double bustOnHit(int rank, int size, int iterations){
             //send result back to leader
             MPI_Send(&result, 1, MPI_INT, 0, 0, MCW);
         }
-
     }
                 
     return 0;

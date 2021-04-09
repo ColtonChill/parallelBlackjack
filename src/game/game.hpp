@@ -4,7 +4,6 @@
 
 class Game{
     private:
-        std::vector<Player*> players;
         Dealer dealer;
         Deck deck;
         void reset();
@@ -12,6 +11,7 @@ class Game{
         bool doAction(Gambler *player);
         Logic mapLogic();
     public:
+    	std::vector<Player*> players;
         int automatic = 0; // default is manual
         int aiType = 3;
         Game(int numPlayers);  // first player is the human, all other are npc
