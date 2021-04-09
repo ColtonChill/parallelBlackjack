@@ -2,7 +2,7 @@
 #include <string>
 #include "deck.hpp"
 
-enum State {playing, busted, holding, win, lose};
+enum State {playing=0, busted, holding, win, lose};
 enum Turn {hit, hold, pause};
 
 typedef std::pair<std::vector<Hand>,Deck> Gamestate;

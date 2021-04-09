@@ -55,6 +55,7 @@ int Hand::score(){
         total += 10;
         aceCount --;
     }
+    if(total>21) return -1;
     return total;    
 };
 void Hand::add(Card card){
@@ -98,14 +99,14 @@ Deck::Deck(int* data){
     Deck::init();
     Deck::shuffle();
     // info = data
-    for(int i=1;i<=52;i++){
-        for(int j=0;j<data[i];j++){
+    for(int i=1;i<=52;i++){  // card ID
+        for(int j=0;j<data[i];j++){  // num of ID
             auto iter = std::find(cards.begin(),cards.end(),i-1);
             if(iter!=cards.begin()){
                 info[i-1]++;
                 cards.erase(iter);
             }else{
-                std::clog<<"ERR: Deck initializer for card id:"<<i<<" of:"<<j<<"/"<<info[j]<<std::endl;
+                std::clog<<"ERR: Deck initializer for card id:"<<i<<" of:"<<j<<"/"<<info[i]<<std::endl;
             }
         }
     }          

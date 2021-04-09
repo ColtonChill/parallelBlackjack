@@ -4,7 +4,6 @@
 
 class Game{
     private:
-        std::vector<Player*> players;
         Dealer dealer;
         Deck deck;
         void reset();
@@ -12,6 +11,7 @@ class Game{
         bool doAction(Gambler *player);
         Logic mapLogic();
     public:
+        std::vector<Player*> players;
         int automatic = 0; // default is manual
         int aiType = 3;
         Game(int numPlayers);  // first player is the human, all other are npc
@@ -21,8 +21,9 @@ class Game{
         Game(int* info);  // to be populated by the MPI packate
         int* gameInfo();
         Gamestate makeGameState();
-        void play(int rounds, bool continuing);
-        void play(int rounds){play(rounds,false);};
-        void play(){play(1);}; // play without redealing cards, human first
-        void setAuto(bool b){automatic = b;}
+        int play(int rounds);
+        int play(){return play(1);}; // play without redealing cards, human first
+        int results();
+        void setAuto(bool b){automatic = b?1:0;}
+        void setPlayer(int i, Hand hand);
 };

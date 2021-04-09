@@ -76,7 +76,6 @@ Gambler::Gambler(int id, Logic l, int* handInfo){
 }
 
 void Gambler::reset(){
-    state = playing;
     hand.clear();
 }
 void Dealer::showHand(bool title){

@@ -1,20 +1,29 @@
-#include <iostream>
-#include <vector>
+#include <iostream>  // cout/cin
+
+// #include "game.hpp" // header in local directory
+#include "game/game.hpp"
+
 
 
 int main(){
-    // input array
-    int src1[] = { 1, 2, 3 };
-    int src2[] = { 4, 5, 6 };
- 
-    std::vector<int> dest;
-    dest.insert(dest.end(), std::begin(src1), std::end(src1));
-    dest.insert(dest.end(), std::begin(src2), std::end(src2));
-    
-    for (int i: dest) {
-        std::cout << i << " ";
-    }
-    std::cout<<std::endl;
- 
+    /* Mute and un-mute the clog (i.e. the ui stuff)*/
+    std::clog.setstate(std::ios_base::failbit);
+    std::clog.clear();
+
+
+    Game game = Game(2);
+    int results = game.play(3);
+
+    int* temp = game.gameInfo();
+
+    std::cout<<std::endl<<std::endl;
+
+
+    std::cout<<"RESULTS:"<<results<<std::endl;
+    Game rematch = Game(temp);
+    game.setAuto(true);
+
+    results = rematch.play(1);
+    std::cout<<"RESULTS:"<<results<<std::endl;
     return 0;
 }
