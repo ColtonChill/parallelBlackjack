@@ -234,7 +234,7 @@ int Game::play(int rounds){
     return results;
 }
 
-int Game::hitMe(){
+int Game::hitme(){
     players[0]->hand.add(deck.draw());
     return players[0]->hand.score() != -1;
 }
