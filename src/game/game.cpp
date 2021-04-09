@@ -234,6 +234,11 @@ int Game::play(int rounds){
     return results;
 }
 
+int Game::hitMe(){
+    players[0]->hand.add(deck.draw());
+    return players[0]->hand.score() != -1;
+}
+
 void Game::setPlayer(int i, Hand hand){
     for (auto &&card : hand.getCards()){
         deck.find(card.getID());
