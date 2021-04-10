@@ -23,7 +23,7 @@ class Game{
         Gamestate makeGameState();
         int play(int rounds);
         int play(){return play(1);}; // play without redealing cards, human first
-        int hitMe();
+        int hitme();
         void setAuto(bool b){automatic = b?1:0;}
         void setPlayer(int i, Hand hand);
 };
