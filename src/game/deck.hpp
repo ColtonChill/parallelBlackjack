@@ -30,6 +30,7 @@ class Deck{
         Deck(int n);
         Deck(int* data);  // used to preload the dead
         int* getInfo(); // returns the info needed to recreate similar decks
+        std::vector<Card> getCards();
         int size(); // number of cards, NOT numer of subdecks in deck
         void shuffle();
         void init();

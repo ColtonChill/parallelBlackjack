@@ -6,6 +6,8 @@
 
 using namespace std;
 #define MCW MPI_COMM_WORLD
+#define mute clog.setstate(ios_base::failbit)
+#define unMute std::clog.clear();
 
 //structure of gameinfo
 // throw away size for mpi send: 0
@@ -50,7 +52,7 @@ void bustOnHit(int rank, int size, int iterations){
         //do the extra work
         for(int i = 0; i < leftover; i++){
             //mute output
-            clog.setstate(ios_base::failbit);
+            mute;
             
             //workers will simulate a single round
             temp[1]=1;
@@ -87,7 +89,7 @@ void bustOnHit(int rank, int size, int iterations){
         int result;
 
         //mute output
-        clog.setstate(ios_base::failbit);
+        mute;
 
         //check for message length
         MPI_Probe(0, MPI_ANY_TAG, MCW, &status);
@@ -121,14 +123,14 @@ void bustOnHit(int rank, int size, int iterations){
     }
 }
 
-void winWithHand(int rank, int size, int length, int cards[], int iterations){
+void winWithHand(int rank, int size, int length, int cards[], int iterations, int numberOfPlayers){
     if(rank == 0){
         int result;
         int won = 0;
         double percent;
 
         //send card info and amount of work to do
-        int * data = cards;
+        int* data = cards;
         int work = floor((double)iterations/(double)(size-1));
 
         //send workers data
@@ -146,10 +148,10 @@ void winWithHand(int rank, int size, int length, int cards[], int iterations){
 
         //do the extra work
         int leftover = iterations%(size-1);
-        clog.setstate(ios_base::failbit);
+        mute;
         for(int i = 0; i < leftover; i++){
             //create random game state
-            Game game = Game(3);
+            Game game = Game(numberOfPlayers);
 
             //set players hand
             game.setPlayer(0, hand);
@@ -192,10 +194,10 @@ void winWithHand(int rank, int size, int length, int cards[], int iterations){
         }
 
         //run simulation specified number of times
-        clog.setstate(ios_base::failbit);
+        mute;
         for(int i = 0; i < work; i++){
             //create random game state
-            Game game = Game(3);
+            Game game = Game(numberOfPlayers, true);
 
             //set players hand
             game.setPlayer(0, hand);
@@ -209,13 +211,11 @@ void winWithHand(int rank, int size, int length, int cards[], int iterations){
     }
 }
 
-void strategy(int rank, int size, int iterations){
+void Strategy(int rank, int size, int iterations, int strategy, int numberOfPlayers){
     if(rank == 0){
         int result;
         int won = 0;
         double percent;
-
-        int strategy = 0;
 
         //send the strategy type and how many simulations to run
         int data[2] = {strategy, iterations/(size-1)};
@@ -227,8 +227,19 @@ void strategy(int rank, int size, int iterations){
 
         //do the extra work
         int leftover = iterations%(size-1);
+        mute;
+        for(int i = 0; i < leftover; i++){
+            //create random game state
+            Game game = Game(numberOfPlayers);
 
-        //recieve results
+            //set players hand
+            game.setPlayerAI(0, strategy);
+
+            //simulate game
+            won += game.play();
+        }
+        cout<<won<<endl;
+        //receive results
         for(int i = 1; i < size; i++){
             MPI_Recv(&result, 1, MPI_INT, i, MPI_ANY_TAG, MCW, MPI_STATUS_IGNORE);
             won += result;
@@ -249,19 +260,17 @@ void strategy(int rank, int size, int iterations){
         MPI_Recv(work, 2, MPI_INT, 0, MPI_ANY_TAG, MCW, MPI_STATUS_IGNORE);
 
         //run simulation specified number of times
-        clog.setstate(ios_base::failbit);
+        mute;
         for(int i = 0; i < work[1]; i++){
-            if(i%2 == 0){
-                won++;
-            }
 
             //create random game state
-            Game game = Game(3);
+            Game game = Game(numberOfPlayers,true);
 
-            //set player ai
+            // set player ai
+            game.setPlayerAI(0,strategy);
 
             //simulate game
-            // game.play();
+            won += game.play();
         }
 
         //send results back to leader
@@ -270,7 +279,7 @@ void strategy(int rank, int size, int iterations){
 }
 
 int main(int argc, char **argv){
-    enum simulationType {hit, hand, strat};
+    enum simulationType {hit, hand, strat, testing};
     int rank, size, length;
     MPI_Init(&argc , &argv);
     MPI_Comm_rank(MCW, &rank);
@@ -282,16 +291,28 @@ int main(int argc, char **argv){
     //////////////////
     
     //general
-    int iterations = 3000;
-    simulationType simulate = hit; //hit, hand, or strat
-    
+    int iterations = 100000;
+    simulationType simulate = strat; //hit, hand, or strat
+    int numberOfPlayers = 1;
+
     //hit
+    // int cards[] = {0,12};
 
     //hand
-    int cards[] = {9,0};
+        // 0+13*i = Ace,
+        // 1+13*i = 2,
+        // ...
+        // 12+13*i = king,
+    int cards[] = {0,12};
 
     //strat
-    int strategy = 0;
+        // hitMe 0
+        // passMe 1
+        // manuel 2
+        // basic 3
+        // cardCounting 4
+        // psychic 5
+    int strategy = 5;
 
     //////////////////
     //  CONFIG END  //
@@ -299,17 +320,15 @@ int main(int argc, char **argv){
 
     switch(simulate){
         case hit:
-            cout << "hit" << endl;
             bustOnHit(rank, size, iterations);
             break;
         case hand:
-            cout << "hand" << endl;
             length = (sizeof(cards)/sizeof(*cards));
-            winWithHand(rank, size, length, cards, iterations);
+            winWithHand(rank, size, length, cards, iterations, numberOfPlayers);
             break;
         case strat:
-            cout << "strat" << endl;
-            strategy(rank, size, iterations);
+            Strategy(rank, size, iterations, strategy, numberOfPlayers);
+            break;
         default:
             cout << "unrecognized simulation" << endl;
     }

@@ -22,5 +22,5 @@ game.o: game/game.hpp game/game.cpp
 	mpic++ -c game.cpp
 
 clean:
-	rm *.o
 	rm game/*.o
+	rm *.o *.out

@@ -25,9 +25,9 @@ Logic Game::mapLogic(){
     case 3:
         return &basic;
     case 4:
-        return &scoreing;
-    case 5:
         return &cardCounting;
+    case 5:
+        return &psychic;
     default:
         return &basic;
     }
@@ -110,23 +110,25 @@ Game::Game(int* gamestate){ // NOTE TO SELF: need to include int flag for NPC lo
         for(int j=0;j<=handSize;j++){
             handInfo[j] = gamestate[j+index];
         }index += handSize+1;
-        if(automatic==0 && i==0){
-            players.push_back(new Player(i+1,&manuel,handInfo));
+        if(i==0){
+            if(automatic == 0) players.push_back(new Player(i+1,&manuel,handInfo));
+            else players.push_back(new Player(i+1,mapLogic(),handInfo));
         }else{
-            players.push_back(new Player(i+1,mapLogic(),handInfo));
+            players.push_back(new Player(i+1,basic,handInfo));
         }
     }
 }
 
-Game::Game(int numPlayers){
+void Game::constructor(int numPlayers, bool a){
     deck = Deck();
     dealer = Dealer();
-
+    automatic = a;
     for(int i=0;i<numPlayers;i++){
-        if(automatic==0 && i==0){
-            players.push_back(new Player(i+1,&manuel));
+        if(automatic==0){
+            if(i==0) players.push_back(new Player(i+1,&manuel));
+            else players.push_back(new Player(i+1,mapLogic()));
         }else{
-            players.push_back(new Player(i+1,mapLogic()));
+            players.push_back(new Player(i+1,basic));
         }
     }
 }

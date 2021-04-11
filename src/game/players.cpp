@@ -10,7 +10,7 @@ Turn passMe(int id, Gamestate gamestate){ // 1
 Turn manuel(int id, Gamestate gamestate){ // 2
     std::string input;
     while(true){
-        std::cout<<"\thit(1)/hold(2)/x?:";
+        std::clog<<"\thit(1)/hold(2)/x?:";
         std::cin>>input;
         if(input=="1" || input=="h"){
             return hit;
@@ -19,7 +19,7 @@ Turn manuel(int id, Gamestate gamestate){ // 2
         }else if(input=="x" || input=="X"){
             return pause;
         }else{
-            std::cout<<"Invalid input"<<std::endl;
+            std::clog<<"Invalid input"<<std::endl;
         }
     }
 }
@@ -31,23 +31,51 @@ Turn basic(int id, Gamestate gamestate){ // 3
         return hold;
     }
 }
-Turn scoreing(int id, Gamestate gamestate){ // 4
-    Hand hand = gamestate.first[id];
-    if(hand.score()<17){
-        return hit;
-    }else{
-        return hold;
+
+Turn cardCounting(int id, Gamestate gamestate){ // 4
+    int myScore = gamestate.first[id].score();
+    auto d = gamestate.second.getInfo();
+
+    double odds[10];
+    for(int i=0;i<9;i++){
+        odds[i] = ((double)4*d[0] -d[i+1]-d[i+14]-d[i+27]-d[i+40])/(52*d[0]);
+        // std::cout<<4*d[0]<<d[i+1]<<d[i+14]<<d[i+27]<<d[i+40]<<4*d[0];
+        // std::cout<<" odds["<<i<<"]"<<odds[i]<<std::endl;
     }
-}
-Turn cardCounting(int id, Gamestate gamestate){ // 5
-    Hand hand = gamestate.first[id];
-    if(hand.score()<17){
-        return hit;
-    }else{
-        return hold;
+
+    odds[10]=0;  // 10, jack, queen, king
+    for(int i=9;i<14;i++){
+       odds[10] += ((double)4*d[0] -d[i+1]-d[i+14]-d[i+27]-d[i+40])/(52*d[0]);
     }
+
+
+    double chance = 0;  // chance that I won't bust on a hit
+    for(int i=0;i<21-myScore;i++){
+        // std::cout<<odds[i]<<" ";
+        chance += odds[i];
+    }
+    // std::cout<<std::endl<<"chance:"<<myScore<<" "<<chance<<std::endl<<std::endl;
+
+    if(chance>0.5){
+        return hit;
+    }
+    for (auto &&h : gamestate.first){
+        if(h.score()>myScore){
+            return hit;
+        }
+    }
+    return hold;
 }
 
+Turn psychic(int id, Gamestate gamestate){ // 5
+    Hand theoreticalHand = gamestate.first[id];
+    theoreticalHand.add(gamestate.second.getCards().back());
+    if(theoreticalHand.score() == -1){
+        return hold;
+    }else{
+        return hit;
+    }
+}
 
 //// Player functions ////
 Gambler::Gambler(int id){

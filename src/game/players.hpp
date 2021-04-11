@@ -13,8 +13,8 @@ Turn hitMe(int id, Gamestate gamestate); // 0
 Turn passMe(int id, Gamestate gamestate); // 1
 Turn manuel(int id, Gamestate gamestate); // 2
 Turn basic(int id, Gamestate gamestate); // 3
-Turn scoreing(int id, Gamestate gamestate); // 4
-Turn cardCounting(int id, Gamestate gamestate); // 5
+Turn cardCounting(int id, Gamestate gamestate); // 4
+Turn psychic(int id, Gamestate gamestate); // 5
 
 // players
 class Gambler{
@@ -23,11 +23,11 @@ class Gambler{
         Hand hand;
         State state;
         int ID;
-        void reset();
-        Gambler(int id);
+        Gambler(int id);  // player label
         Gambler(int id, int* handInfo);
         Gambler(int id, Logic l);
         Gambler(int id, Logic l, int* handInfo);
+        void reset();  // clears hand
         virtual ~Gambler(){}
         virtual Turn takeTurn(Gamestate gamestate){return ai(ID,gamestate);}
         virtual void showHand(bool title)=0;

@@ -142,10 +142,15 @@ Card Deck::find(int id){
     }else{
         auto temp = cards[index];
         cards.erase(cards.begin()+index);
+        info[temp.getID()%52]++;
         return temp;
     }
 }
 
 int Deck::size(){
     return cards.size();
+}
+
+std::vector<Card> Deck::getCards(){
+    return cards;
 }
